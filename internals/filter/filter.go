@@ -12,8 +12,17 @@ type Filter interface {
 type Context struct {
 	Request    *http.Request
 	Url        string
-	Attributes map[string]interface{}
+	attributes map[string]interface{}
 	next       Filter
+}
+
+func (context *Context) SetAttribute(name string, attribute interface{}) {
+	context.attributes[name] = attribute
+}
+
+func (context *Context) GetAttribute(name string) (interface{}, bool) {
+	value, exists := context.attributes[name]
+	return value, exists
 }
 
 func (context *Context) RunNextFilter() *http.Response {

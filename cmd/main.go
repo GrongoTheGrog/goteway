@@ -11,14 +11,13 @@ import (
 func main() {
 
 	filter1 := filter.NewBasicFilter(func(ctx *filter.Context) *http.Response {
-		//TODO Make an abstraction for the attributes
 
-		ctx.Attributes["token"] = "token"
+		ctx.SetAttribute("token", "token")
 		return ctx.RunNextFilter()
 	})
 
 	filter2 := filter.NewBasicFilter(func(ctx *filter.Context) *http.Response {
-		token, _ := ctx.Attributes["token"]
+		token, _ := ctx.GetAttribute("token")
 		log.Printf("Logging context frmo other filter: %s", token)
 
 		response := ctx.RunNextFilter()
