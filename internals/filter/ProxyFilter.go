@@ -28,9 +28,9 @@ func (proxyFilter *ProxyFilter) RunFilter(context *Context) *http.Response {
 	}
 
 	response, err := http.DefaultClient.Do(newRequest)
-	if err != nil || response == nil {
+	if err != nil {
 		log.Print("Gateway could not finish the request.")
-		return utils.ErrorResponse("Gateway could not perform request.", 500)
+		return utils.ErrorResponse("Gateway could not perform request: "+err.Error(), 500)
 	}
 
 	return response

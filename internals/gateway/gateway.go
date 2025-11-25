@@ -43,7 +43,7 @@ func (gateway *Gateway) Start(port string) {
 		}
 	})
 
-	err := http.ListenAndServe(":"+port, mux)
+	err := http.ListenAndServe(port, mux)
 	if err != nil {
 		log.Fatalf("Error while starting the gateway: %s", err.Error())
 	}
@@ -53,4 +53,30 @@ func (gateway *Gateway) NewRoute(pattern, endpoint string) *Route {
 	route := NewRoute(pattern, endpoint)
 	gateway.routes = append(gateway.routes, route)
 	return route
+}
+
+// AddFilter adds the filter at the end of the filter chain
+// and before the proxy filter, if existing
+func (gateway *Gateway) AddFilter(filter filter.Filter) *Gateway {
+	gateway.FilterChain.AddFilter(filter)
+	return gateway
+}
+
+// AddFilterBefore adds the filter before the beforeFilter.
+// Panics if beforeFilter does not exist, or it is a filter.EntryFilter.
+func (gateway *Gateway) AddFilterBefore(filter, beforeFilter filter.Filter) *Gateway {
+	gateway.FilterChain.AddFilterBefore(filter, beforeFilter)
+	return gateway
+}
+
+// AddFilterAfter adds the filter after the afterFilter.
+// Panics if afterFilter does not exist, or it is a filter.ProxyFilter
+func (gateway *Gateway) AddFilterAfter(filter, afterFilter filter.Filter) *Gateway {
+	gateway.FilterChain.AddFilterAfter(filter, afterFilter)
+	return gateway
+}
+
+func (gateway *Gateway) LogFilter(options ...filter.LogOption) *Gateway {
+	gateway.FilterChain.AddFilter(filter.NewLogFilter(options...))
+	return gateway
 }

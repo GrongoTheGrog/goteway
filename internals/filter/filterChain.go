@@ -28,6 +28,7 @@ func (fc *FilterChain) AddFilter(filter Filter) {
 		return
 	}
 
+	fc.Last.SetNext(filter)
 	fc.Last = filter
 }
 

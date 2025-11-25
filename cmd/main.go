@@ -18,22 +18,22 @@ func main() {
 
 	filter2 := filter.NewBasicFilter(func(ctx *filter.Context) *http.Response {
 		token, _ := ctx.GetAttribute("token")
-		log.Printf("Logging context frmo other filter: %s", token)
+		log.Printf("Logging context from other filter: %s", token)
 
-		response := ctx.RunNextFilter()
-
-		response.StatusCode = 200
-		return response
+		return ctx.RunNextFilter()
 	})
 
 	gateway := gateway.NewGateway()
 
-	//TODO Hide filter chain with fluent
-	gateway.FilterChain.AddFilter(filter1)
-	gateway.FilterChain.AddFilterAfter(filter2, filter1)
+	gateway.
+		AddFilter(filter1).
+		AddFilter(filter2).
+		LogFilter(
+			filter.Path,
+		)
 
-	//TODO Make new Route return route
-	gateway.NewRoute("/user-service/*", "http://localhost:8082")
+	gateway.NewRoute("/user-service/*", "http://localhost:8082").
+		RemoveLeftPath(1)
 
-	gateway.Start("9000")
+	gateway.Start(":9000")
 }

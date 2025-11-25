@@ -4,6 +4,8 @@ import (
 	"io"
 	"log"
 	"net/http"
+
+	"github.com/google/uuid"
 )
 
 type EntryFilter struct {
@@ -18,7 +20,8 @@ func (entryFilter *EntryFilter) StartChain(writer http.ResponseWriter, request *
 	context := &Context{
 		Request:    request,
 		Url:        endpoint,
-		Attributes: make(map[string]interface{}),
+		requestId:  uuid.NewString(),
+		attributes: make(map[string]interface{}),
 		next:       entryFilter,
 	}
 

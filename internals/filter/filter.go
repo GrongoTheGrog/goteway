@@ -12,8 +12,13 @@ type Filter interface {
 type Context struct {
 	Request    *http.Request
 	Url        string
+	requestId  string
 	attributes map[string]interface{}
 	next       Filter
+}
+
+func (context *Context) GetRequestId() string {
+	return context.requestId
 }
 
 func (context *Context) SetAttribute(name string, attribute interface{}) {
