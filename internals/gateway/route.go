@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"github.com/GrongoTheGrog/goteway/internals/filter"
+	"github.com/GrongoTheGrog/goteway/internals/filter/request"
 )
 
 type Route struct {
@@ -24,17 +25,11 @@ func (route *Route) Filter(filter filter.Filter) *Route {
 }
 
 func (route *Route) RemoveLeftPath(pathNum int) *Route {
-	route.filterChain.AddFilter(filter.NewRemoveLeftPathFilter(pathNum))
+	route.filterChain.AddFilter(request.NewRemoveLeftPathFilter(pathNum))
 	return route
 }
 
 func (route *Route) RemoveRightPath(pathNum int) *Route {
-	route.filterChain.AddFilter(filter.NewRemoveRightPathFilter(pathNum))
+	route.filterChain.AddFilter(request.NewRemoveRightPathFilter(pathNum))
 	return route
 }
-
-//TODO Rewrite path
-//TODO Logging filter
-//TODO Jwt Filter
-//TODO Api Key filter
-//TODO

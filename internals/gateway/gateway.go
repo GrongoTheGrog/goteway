@@ -6,6 +6,7 @@ import (
 	"regexp"
 
 	"github.com/GrongoTheGrog/goteway/internals/filter"
+	"github.com/GrongoTheGrog/goteway/internals/filter/logging"
 )
 
 type Gateway struct {
@@ -76,7 +77,7 @@ func (gateway *Gateway) AddFilterAfter(filter, afterFilter filter.Filter) *Gatew
 	return gateway
 }
 
-func (gateway *Gateway) LogFilter(options ...filter.LogOption) *Gateway {
-	gateway.FilterChain.AddFilter(filter.NewLogFilter(options...))
+func (gateway *Gateway) LogFilter(options ...logging.LogOption) *Gateway {
+	gateway.FilterChain.AddFilter(logging.NewLogFilter(options...))
 	return gateway
 }

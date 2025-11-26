@@ -2,6 +2,6 @@ package filter
 
 import "fmt"
 
-func requestPrefix(requestId string) string {
+func RequestPrefix(requestId string) string {
 	return fmt.Sprintf("REQUEST %s:", requestId)
 }

@@ -25,6 +25,8 @@ func (entryFilter *EntryFilter) StartChain(writer http.ResponseWriter, request *
 		next:       entryFilter,
 	}
 
+	request.Header.Set("X-Request-ID", context.requestId)
+
 	response := entryFilter.RunFilter(context)
 
 	body, err := io.ReadAll(response.Body)

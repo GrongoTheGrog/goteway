@@ -23,13 +23,13 @@ func (proxyFilter *ProxyFilter) RunFilter(context *Context) *http.Response {
 
 	newRequest, err := http.NewRequest(context.Request.Method, context.Url+context.Request.URL.Path, newBuffer)
 	if err != nil {
-		log.Printf("Could not form request: %s", err.Error())
+		log.Printf("%s Could not form request: %s", RequestPrefix(context.requestId), err.Error())
 		return utils.ErrorResponse("Could not form request", 500)
 	}
 
 	response, err := http.DefaultClient.Do(newRequest)
 	if err != nil {
-		log.Print("Gateway could not finish the request.")
+		log.Printf("%s Gateway could not finish the request.", RequestPrefix(context.requestId))
 		return utils.ErrorResponse("Gateway could not perform request: "+err.Error(), 500)
 	}
 
