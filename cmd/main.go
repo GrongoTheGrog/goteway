@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/GrongoTheGrog/goteway/internals/filter"
+	"github.com/GrongoTheGrog/goteway/internals/filter/logging"
 	"github.com/GrongoTheGrog/goteway/internals/gateway"
 )
 
@@ -29,11 +30,13 @@ func main() {
 		AddFilter(filter1).
 		AddFilter(filter2).
 		LogFilter(
-			filter.Path,
+			logging.Path,
 		)
 
 	gateway.NewRoute("/user-service/*", "http://localhost:8082").
-		RemoveLeftPath(1)
+		RemoveLeftPath(1).
+		RemoveRightPath(1)
+
 
 	gateway.Start(":9000")
 }

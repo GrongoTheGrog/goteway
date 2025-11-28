@@ -1,11 +1,11 @@
 package filter
 
 import (
+	"github.com/google/uuid"
 	"io"
 	"log"
+	"net"
 	"net/http"
-
-	"github.com/google/uuid"
 )
 
 type EntryFilter struct {
@@ -17,8 +17,11 @@ func NewEntryFilter() *EntryFilter {
 }
 
 func (entryFilter *EntryFilter) StartChain(writer http.ResponseWriter, request *http.Request, endpoint string) {
+	ip, _, _ := net.SplitHostPort(request.RemoteAddr)
+
 	context := &Context{
 		Request:    request,
+		RequestIp:  ip,
 		Url:        endpoint,
 		requestId:  uuid.NewString(),
 		attributes: make(map[string]interface{}),

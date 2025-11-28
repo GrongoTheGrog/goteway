@@ -4,9 +4,11 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"time"
 
 	"github.com/GrongoTheGrog/goteway/internals/filter"
 	"github.com/GrongoTheGrog/goteway/internals/filter/logging"
+	rate_limiting "github.com/GrongoTheGrog/goteway/internals/filter/rate-limiting"
 )
 
 type Gateway struct {
@@ -79,5 +81,16 @@ func (gateway *Gateway) AddFilterAfter(filter, afterFilter filter.Filter) *Gatew
 
 func (gateway *Gateway) LogFilter(options ...logging.LogOption) *Gateway {
 	gateway.FilterChain.AddFilter(logging.NewLogFilter(options...))
+	return gateway
+}
+
+// TokenBucketFilter rate limits the request using the Token Bucket algorithm.
+// See more at https://en.wikipedia.org/wiki/Token_bucket
+func (gateway *Gateway) TokenBucketFilter(
+	maxTokenNumber int,
+	tokenCreationTime time.Duration,
+	resource rate_limiting.ResourceLimiting,
+) *Gateway {
+	gateway.AddFilter(rate_limiting.NewTokenBucketFilter(maxTokenNumber, tokenCreationTime, resource))
 	return gateway
 }
