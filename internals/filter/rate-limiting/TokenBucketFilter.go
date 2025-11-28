@@ -29,14 +29,15 @@ func NewTokenBucketFilter(
 
 		var allowRequest bool
 		var err error
+		var remaining int
 
 		switch resource {
 		case USER:
-			allowRequest, err = storeInMap(ctx.RequestIp, maxTokenNumber, tokenCreationTime)
+			allowRequest, remaining, err = storeInMap(ctx.RequestIp, maxTokenNumber, tokenCreationTime)
 		case ROUTE:
-			allowRequest, err = storeInMap(ctx.Url, maxTokenNumber, tokenCreationTime)
+			allowRequest, remaining, err = storeInMap(ctx.Url, maxTokenNumber, tokenCreationTime)
 		case GATEWAY:
-			allowRequest, err = storeInMap("gateway", maxTokenNumber, tokenCreationTime)
+			allowRequest, remaining, err = storeInMap("gateway", maxTokenNumber, tokenCreationTime)
 		default:
 			err = fmt.Errorf("Unknown resource type passed in rate limiting filter.")
 		}
@@ -48,29 +49,37 @@ func NewTokenBucketFilter(
 
 		if !allowRequest {
 			ctx.Log("Too many requests, token bucket was 0. Denying request.")
-			return utils.ErrorResponse("Too many requests, try again later.", 429)
+			response := utils.ErrorResponse("Too many requests, try again later.", 429)
+
+			writeRateLimitingHeaders(response, maxTokenNumber, remaining)
+			return response
 		}
 
-		return ctx.RunNextFilter()
+		ctx.Log("%v/%v requests remaining.", remaining, maxTokenNumber)
+
+		response := ctx.RunNextFilter()
+
+		writeRateLimitingHeaders(response, maxTokenNumber, remaining)
+		return response
 	})
 }
 
-type Token struct {
+type Bucket struct {
 	token       int
 	lastRequest time.Time
 	mu          sync.Mutex
 }
 
-func storeInMap(key string, maxTokenNumber int, refillInterval time.Duration) (bool, error) {
+func storeInMap(key string, maxTokenNumber int, refillInterval time.Duration) (bool, int, error) {
 	value, _ := tokenMap.LoadOrStore(
 		key,
-		&Token{
+		&Bucket{
 			token:       maxTokenNumber,
 			lastRequest: time.Now(),
 		},
 	)
 
-	bucket := value.(*Token)
+	bucket := value.(*Bucket)
 
 	bucket.mu.Lock()
 	defer bucket.mu.Unlock()
@@ -84,10 +93,10 @@ func storeInMap(key string, maxTokenNumber int, refillInterval time.Duration) (b
 	}
 
 	if bucket.token <= 0 {
-		return false, nil
+		return false, 0, nil
 	}
 
 	bucket.token--
 
-	return true, nil
+	return true, bucket.token, nil
 }

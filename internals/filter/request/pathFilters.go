@@ -1,7 +1,6 @@
 package request
 
 import (
-	"log"
 	"net/http"
 	"strings"
 
@@ -17,8 +16,7 @@ func NewRemoveLeftPathFilter(pathCount int) filter.Filter {
 
 		fullPath = "/" + strings.Join(paths, "/")
 
-		log.Printf("%s Changed path from %s to %s",
-			filter.RequestPrefix(ctx.GetRequestId()),
+		ctx.Log("Changed path from %s to %s",
 			ctx.Request.URL.Path,
 			fullPath,
 		)
@@ -36,10 +34,9 @@ func NewRemoveRightPathFilter(pathCount int) filter.Filter {
 		paths := strings.Split(fullPath, "/")
 		paths = paths[0 : len(paths)-pathCount]
 
-		fullPath = "/" + strings.Join(paths, "/")
+		fullPath = strings.Join(paths, "/")
 
-		log.Printf("%s Changed path from %s to %s",
-			filter.RequestPrefix(ctx.GetRequestId()),
+		ctx.Log("Changed path from %s to %s",
 			ctx.Request.URL.Path,
 			fullPath,
 		)

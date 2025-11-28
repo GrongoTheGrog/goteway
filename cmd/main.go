@@ -1,42 +1,27 @@
 package main
 
 import (
-	"log"
-	"net/http"
+	"time"
 
-	"github.com/GrongoTheGrog/goteway/internals/filter"
 	"github.com/GrongoTheGrog/goteway/internals/filter/logging"
+	rate_limiting "github.com/GrongoTheGrog/goteway/internals/filter/rate-limiting"
 	"github.com/GrongoTheGrog/goteway/internals/gateway"
 )
 
 func main() {
 
-	filter1 := filter.NewBasicFilter(func(ctx *filter.Context) *http.Response {
-
-		ctx.SetAttribute("token", "token")
-		return ctx.RunNextFilter()
-	})
-
-	filter2 := filter.NewBasicFilter(func(ctx *filter.Context) *http.Response {
-		token, _ := ctx.GetAttribute("token")
-		log.Printf("Logging context from other filter: %s", token)
-
-		return ctx.RunNextFilter()
-	})
-
 	gateway := gateway.NewGateway()
 
 	gateway.
-		AddFilter(filter1).
-		AddFilter(filter2).
+		TokenBucketFilter(100, 1*time.Second, rate_limiting.USER).
 		LogFilter(
 			logging.Path,
+			logging.Status,
+			logging.Latency,
 		)
 
 	gateway.NewRoute("/user-service/*", "http://localhost:8082").
-		RemoveLeftPath(1).
-		RemoveRightPath(1)
-
+		RemoveLeftPath(1)
 
 	gateway.Start(":9000")
 }

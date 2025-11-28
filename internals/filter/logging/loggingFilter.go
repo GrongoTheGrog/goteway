@@ -25,8 +25,6 @@ func NewLogFilter(options ...LogOption) filter.Filter {
 
 	return filter.NewBasicFilter(func(ctx *filter.Context) *http.Response {
 
-		rId := ctx.GetRequestId()
-
 		beforeRequest := time.Now()
 		measureLatency := false
 		logStatus := false
@@ -34,15 +32,15 @@ func NewLogFilter(options ...LogOption) filter.Filter {
 		for _, option := range options {
 			switch option {
 			case Method:
-				log.Printf("%s %s", filter.RequestPrefix(rId), ctx.Request.Method)
+				ctx.Log("%s", ctx.Request.Method)
 			case Latency:
 				measureLatency = true
 			case Status:
 				logStatus = true
 			case Path:
-				log.Printf("%s %s", filter.RequestPrefix(rId), ctx.Request.URL)
+				ctx.Log("%s", ctx.Request.URL)
 			case FullUrl:
-				log.Printf("%s %s%s", filter.RequestPrefix(rId), ctx.Url, ctx.Request.URL)
+				ctx.Log("%s%s", ctx.Request.URL)
 			default:
 				log.Panic("Unknown log option.")
 			}
@@ -51,12 +49,12 @@ func NewLogFilter(options ...LogOption) filter.Filter {
 		response := ctx.RunNextFilter()
 
 		if measureLatency {
-			elapsedTimeMs := (time.Now().Nanosecond() - beforeRequest.Nanosecond()) / 1000
-			log.Printf("%s Duration of %v ms", filter.RequestPrefix(rId), elapsedTimeMs)
+			elapsedTimeMs := time.Since(beforeRequest)
+			ctx.Log("Duration of %v ms", elapsedTimeMs)
 		}
 
 		if logStatus {
-			log.Printf("%s Status %v", filter.RequestPrefix(rId), response.StatusCode)
+			ctx.Log("Status %v", response.StatusCode)
 		}
 
 		return response

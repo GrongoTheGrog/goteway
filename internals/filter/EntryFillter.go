@@ -1,11 +1,11 @@
 package filter
 
 import (
-	"github.com/google/uuid"
 	"io"
-	"log"
 	"net"
 	"net/http"
+
+	"github.com/google/uuid"
 )
 
 type EntryFilter struct {
@@ -34,7 +34,7 @@ func (entryFilter *EntryFilter) StartChain(writer http.ResponseWriter, request *
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
-		log.Printf("Error reading the response body from request: %s", request.RequestURI)
+		context.Log("Error reading the response body from request: %s", request.RequestURI)
 		writer.WriteHeader(500)
 		writer.Write([]byte("Error reading the response body from request"))
 		return
@@ -43,7 +43,7 @@ func (entryFilter *EntryFilter) StartChain(writer http.ResponseWriter, request *
 	writer.WriteHeader(response.StatusCode)
 	_, err = writer.Write(body)
 	if err != nil {
-		log.Printf("Failed to write response body stream to client response.")
+		context.Log("Failed to write response body stream to client response.")
 		writer.WriteHeader(500)
 		writer.Write([]byte("Failed to write response body stream to client response."))
 		return
