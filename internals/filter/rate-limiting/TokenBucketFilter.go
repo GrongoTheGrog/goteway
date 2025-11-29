@@ -1,21 +1,12 @@
 package rate_limiting
 
 import (
-	"fmt"
 	"net/http"
 	"sync"
 	"time"
 
 	"github.com/GrongoTheGrog/goteway/internals/filter"
 	"github.com/GrongoTheGrog/goteway/internals/utils"
-)
-
-type ResourceLimiting int
-
-const (
-	USER = iota
-	ROUTE
-	GATEWAY
 )
 
 var tokenMap sync.Map
@@ -27,20 +18,9 @@ func NewTokenBucketFilter(
 ) filter.Filter {
 	return filter.NewBasicFilter(func(ctx *filter.Context) *http.Response {
 
-		var allowRequest bool
-		var err error
-		var remaining int
+		key := getKeyForResource(resource, ctx)
 
-		switch resource {
-		case USER:
-			allowRequest, remaining, err = storeInMap(ctx.RequestIp, maxTokenNumber, tokenCreationTime)
-		case ROUTE:
-			allowRequest, remaining, err = storeInMap(ctx.Url, maxTokenNumber, tokenCreationTime)
-		case GATEWAY:
-			allowRequest, remaining, err = storeInMap("gateway", maxTokenNumber, tokenCreationTime)
-		default:
-			err = fmt.Errorf("Unknown resource type passed in rate limiting filter.")
-		}
+		allowRequest, remaining, err := storeInMap(key, maxTokenNumber, tokenCreationTime)
 
 		if err != nil {
 			ctx.Log("Error in token bucket limiting filter: %s", err.Error())

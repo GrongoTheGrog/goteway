@@ -11,5 +11,6 @@ func ErrorResponse(message string, status int) *http.Response {
 		Body:       io.NopCloser(bytes.NewBuffer([]byte(message))),
 		StatusCode: status,
 		Status:     string(status),
+		Header:     http.Header{},
 	}
 }
