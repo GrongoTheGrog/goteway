@@ -8,7 +8,7 @@ import (
 
 	"github.com/GrongoTheGrog/goteway/internals/filter"
 	"github.com/GrongoTheGrog/goteway/internals/filter/logging"
-	rate_limiting "github.com/GrongoTheGrog/goteway/internals/filter/rate-limiting"
+	rate_limiting "github.com/GrongoTheGrog/goteway/internals/filter/rateLimiting"
 )
 
 type Gateway struct {
@@ -92,5 +92,18 @@ func (gateway *Gateway) TokenBucketFilter(
 	resource rate_limiting.ResourceLimiting,
 ) *Gateway {
 	gateway.AddFilter(rate_limiting.NewTokenBucketFilter(maxTokenNumber, tokenCreationTime, resource))
+	return gateway
+}
+
+func (gateway *Gateway) SlidingWindowCounterFilter(
+	maxRequests int,
+	windowTime time.Duration,
+	limiting rate_limiting.ResourceLimiting,
+) *Gateway {
+
+	gateway.AddFilterAfter(
+		rate_limiting.NewSlidingWindowCounterFilter(maxRequests, windowTime, limiting),
+		gateway.FilterChain.EntryFilter)
+
 	return gateway
 }

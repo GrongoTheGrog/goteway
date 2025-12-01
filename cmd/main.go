@@ -4,24 +4,23 @@ import (
 	"time"
 
 	"github.com/GrongoTheGrog/goteway/internals/filter/logging"
-	rate_limiting "github.com/GrongoTheGrog/goteway/internals/filter/rate-limiting"
+	"github.com/GrongoTheGrog/goteway/internals/filter/rateLimiting"
 	"github.com/GrongoTheGrog/goteway/internals/gateway"
 )
 
 func main() {
 
-	gateway := gateway.NewGateway()
+	appGateway := gateway.NewGateway()
 
-	gateway.
-		TokenBucketFilter(100, 1*time.Second, rate_limiting.USER).
-		LogFilter(
-			logging.Path,
-			logging.Status,
-			logging.Latency,
-		)
+	appGateway.
+		SlidingWindowCounterFilter(100, 1*time.Second, rateLimiting.USER).
+		LogFilter(logging.Path, logging.Status, logging.Latency)
 
-	gateway.NewRoute("/user-service/*", "http://localhost:8082").
+	appGateway.NewRoute("/user-service/*", "http://localhost:8082").
 		RemoveLeftPath(1)
 
-	gateway.Start(":9000")
+	appGateway.NewRoute("/video-service/*", "http://localhost:8081").
+		RemoveLeftPath(1)
+
+	appGateway.Start(":9000")
 }

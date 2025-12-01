@@ -1,4 +1,4 @@
-package rate_limiting
+package rateLimiting
 
 import (
 	"log"

@@ -37,6 +37,16 @@ func (fc *FilterChain) AddFilterAfter(newFilter, afterFilter Filter) {
 		log.Fatal("Can't put a filter after the proxy filter.")
 	}
 
+	if _, ok := afterFilter.(*EntryFilter); ok {
+		newFilter.SetNext(fc.First)
+		fc.First = newFilter
+		afterFilter.SetNext(newFilter)
+		if fc.Last == nil {
+			fc.Last = newFilter
+		}
+		return
+	}
+
 	if fc.First == nil {
 		log.Fatal("The filter provided as after reference does not exist.")
 	}
@@ -45,6 +55,7 @@ func (fc *FilterChain) AddFilterAfter(newFilter, afterFilter Filter) {
 		fc.Last.SetNext(newFilter)
 		fc.Last = newFilter
 		newFilter.SetNext(fc.ProxyFilter)
+		return
 	}
 
 	cur := fc.First
