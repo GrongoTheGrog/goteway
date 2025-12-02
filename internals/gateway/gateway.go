@@ -3,12 +3,11 @@ package gateway
 import (
 	"log"
 	"net/http"
-	"regexp"
 	"time"
 
 	"github.com/GrongoTheGrog/goteway/internals/filter"
 	"github.com/GrongoTheGrog/goteway/internals/filter/logging"
-	rate_limiting "github.com/GrongoTheGrog/goteway/internals/filter/rateLimiting"
+	"github.com/GrongoTheGrog/goteway/internals/filter/rateLimiting"
 )
 
 type Gateway struct {
@@ -29,14 +28,13 @@ func (gateway *Gateway) Start(port string) {
 
 	mux := http.DefaultServeMux
 
-	mux.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
-		path := request.RequestURI
+	for _, route := range gateway.routes {
+		route.Print()
+	}
 
+	mux.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
 		for _, route := range gateway.routes {
-			match, err := regexp.MatchString(route.Match, path)
-			if err != nil {
-				log.Printf("Error comparing regex: " + err.Error())
-			}
+			match := route.Match(request)
 
 			if match {
 				gateway.FilterChain.CombineFilterChains(route.filterChain)
@@ -52,10 +50,9 @@ func (gateway *Gateway) Start(port string) {
 	}
 }
 
-func (gateway *Gateway) NewRoute(pattern, endpoint string) *Route {
-	route := NewRoute(pattern, endpoint)
+func (gateway *Gateway) AddRoute(route *Route) *Gateway {
 	gateway.routes = append(gateway.routes, route)
-	return route
+	return gateway
 }
 
 // AddFilter adds the filter at the end of the filter chain
@@ -89,20 +86,20 @@ func (gateway *Gateway) LogFilter(options ...logging.LogOption) *Gateway {
 func (gateway *Gateway) TokenBucketFilter(
 	maxTokenNumber int,
 	tokenCreationTime time.Duration,
-	resource rate_limiting.ResourceLimiting,
+	resource rateLimiting.ResourceLimiting,
 ) *Gateway {
-	gateway.AddFilter(rate_limiting.NewTokenBucketFilter(maxTokenNumber, tokenCreationTime, resource))
+	gateway.AddFilter(rateLimiting.NewTokenBucketFilter(maxTokenNumber, tokenCreationTime, resource))
 	return gateway
 }
 
 func (gateway *Gateway) SlidingWindowCounterFilter(
 	maxRequests int,
 	windowTime time.Duration,
-	limiting rate_limiting.ResourceLimiting,
+	limiting rateLimiting.ResourceLimiting,
 ) *Gateway {
 
 	gateway.AddFilterAfter(
-		rate_limiting.NewSlidingWindowCounterFilter(maxRequests, windowTime, limiting),
+		rateLimiting.NewSlidingWindowCounterFilter(maxRequests, windowTime, limiting),
 		gateway.FilterChain.EntryFilter)
 
 	return gateway

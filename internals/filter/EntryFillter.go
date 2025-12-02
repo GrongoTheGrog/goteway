@@ -27,6 +27,7 @@ func (entryFilter *EntryFilter) StartChain(writer http.ResponseWriter, request *
 		attributes: make(map[string]interface{}),
 		next:       entryFilter,
 	}
+	context.Log("Routing %s to %s", request.RequestURI, endpoint)
 
 	request.Header.Set("X-Request-ID", context.requestId)
 

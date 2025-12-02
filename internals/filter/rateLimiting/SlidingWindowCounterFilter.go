@@ -34,7 +34,7 @@ func (windowFrame *WindowFrame) addRequest(interval time.Duration) {
 
 	if elapsedTime <= interval {
 		windowFrame.cur.requests++
-	} else if elapsedTime > interval && elapsedTime <= elapsedTime+interval {
+	} else if elapsedTime > interval && elapsedTime <= 2*interval {
 		windowFrame.prev = windowFrame.cur
 		windowFrame.cur = newWindowCounter(windowFrame.prev.time.Add(interval), 1)
 	} else {
@@ -93,7 +93,7 @@ func NewSlidingWindowCounterFilter(
 			return response
 		}
 
-		ctx.Log("%v/%v requests remaining.", requests, maxRequests)
+		ctx.Log("%v/%v requests remaining.", maxRequests-int(requests), maxRequests)
 
 		response := ctx.RunNextFilter()
 		writeRateLimitingHeaders(response, maxRequests, 0)
