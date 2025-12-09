@@ -1,0 +1,28 @@
+gateway:
+  log_filter:                       // logs the following informations about the request/response
+    - method
+    - path
+    - latency
+    - full_url
+    - status
+
+
+routes:
+  - name: service1
+    enabled: true
+    endpoint: "http://service1"
+    paths:
+      - "/service1/*"
+
+    rate_limiting:
+      enabled: true
+      interval_seconds: 60
+      max_requests: 10               // max requests within the interval
+      resource: "user"               // this decides what resouce the filter is limiting; includes "user", "gateway" and "route"
+
+    strip_prefix: 1                  // removes x prefixes from the path
+    strip_suffix: 0                  // removes x suffixes from the path
+    status: 201                      // changes response's status
+    header_config:                   // add headers to response
+                                       - name: something
+                                       value: newValue

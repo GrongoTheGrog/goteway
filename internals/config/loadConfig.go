@@ -61,7 +61,7 @@ func loadRoute(gw *gateway.Gateway, configs []RouteConfig) {
 		}
 
 		route := gateway.NewRoute(routeConfig.Endpoint)
-		route.PathPattern(routeConfig.Paths)
+		route.PathPattern(routeConfig.Paths...)
 
 		var resource rateLimiting.ResourceLimiting
 		switch routeConfig.RateLimiting.Resource {

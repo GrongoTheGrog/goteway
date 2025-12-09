@@ -31,7 +31,7 @@ func NewRoute(endpoint string) *Route {
 	}
 }
 
-func (route *Route) PathPattern(regexes []string) *Route {
+func (route *Route) PathPattern(regexes ...string) *Route {
 	for _, regex := range regexes {
 		route.pathMatches = append(route.pathMatches, regexp.MustCompile(regex))
 	}
