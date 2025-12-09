@@ -6,14 +6,16 @@ import (
 	"net/http"
 	"regexp"
 	"slices"
+	"time"
 
 	"github.com/GrongoTheGrog/goteway/internals/filter"
+	"github.com/GrongoTheGrog/goteway/internals/filter/rateLimiting"
 	"github.com/GrongoTheGrog/goteway/internals/filter/request"
 )
 
 type Route struct {
 	Endpoint    string
-	pathMatch   *regexp.Regexp
+	pathMatches []*regexp.Regexp
 	headerMatch map[string]string
 	methodMatch []string
 	hostMatch   []string
@@ -22,14 +24,17 @@ type Route struct {
 
 func NewRoute(endpoint string) *Route {
 	return &Route{
+		pathMatches: make([]*regexp.Regexp, 0),
 		Endpoint:    endpoint,
 		headerMatch: make(map[string]string),
 		filterChain: &filter.FilterChain{ProxyFilter: filter.NewProxyFilter()},
 	}
 }
 
-func (route *Route) PathPattern(regex string) *Route {
-	route.pathMatch = regexp.MustCompile(regex)
+func (route *Route) PathPattern(regexes []string) *Route {
+	for _, regex := range regexes {
+		route.pathMatches = append(route.pathMatches, regexp.MustCompile(regex))
+	}
 	return route
 }
 
@@ -58,8 +63,8 @@ func (route *Route) Match(request *http.Request) bool {
 		return false
 	}
 
-	if route.pathMatch != nil {
-		ok := route.pathMatch.MatchString(request.RequestURI)
+	for _, regex := range route.pathMatches {
+		ok := regex.MatchString(request.RequestURI)
 		if !ok {
 			return false
 		}
@@ -79,8 +84,8 @@ func (route *Route) Match(request *http.Request) bool {
 func (route *Route) Print() {
 	fmt.Printf("Route added: %s\n", route.Endpoint)
 
-	if route.pathMatch != nil {
-		fmt.Println("\tPath Match: ", route.pathMatch.String())
+	if route.pathMatches != nil {
+		fmt.Println("\tPath Match: ", route.pathMatches)
 	}
 
 	if len(route.hostMatch) > 0 {
@@ -99,6 +104,10 @@ func (route *Route) Print() {
 func (route *Route) Filter(filter filter.Filter) *Route {
 	route.filterChain.AddFilter(filter)
 	return route
+}
+
+func (route *Route) RateLimit(maxRequests int, window time.Duration, resource rateLimiting.ResourceLimiting) {
+	route.filterChain.AddFilter(rateLimiting.NewSlidingWindowCounterFilter(maxRequests, window, resource))
 }
 
 func (route *Route) RemoveLeftPath(pathNum int) *Route {

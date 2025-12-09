@@ -33,6 +33,12 @@ func (entryFilter *EntryFilter) StartChain(writer http.ResponseWriter, request *
 
 	response := entryFilter.RunFilter(context)
 
+	for name, values := range response.Header {
+		for _, value := range values {
+			writer.Header().Add(name, value)
+		}
+	}
+
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		context.Log("Error reading the response body from request: %s", request.RequestURI)
@@ -48,12 +54,6 @@ func (entryFilter *EntryFilter) StartChain(writer http.ResponseWriter, request *
 		writer.WriteHeader(500)
 		writer.Write([]byte("Failed to write response body stream to client response."))
 		return
-	}
-
-	for name, values := range response.Header {
-		for _, value := range values {
-			writer.Header().Add(name, value)
-		}
 	}
 
 }
