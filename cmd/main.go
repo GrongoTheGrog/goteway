@@ -6,11 +6,8 @@ import (
 )
 
 func main() {
-
 	appGateway := gateway.NewGateway()
-
 	config.LoadConfig(appGateway)
-
 	appGateway.Start(":9000")
 }
 

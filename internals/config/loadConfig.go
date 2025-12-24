@@ -17,13 +17,13 @@ import (
 func LoadConfig(gw *gateway.Gateway) {
 	b, err := os.ReadFile("goteway.yml")
 	if err != nil {
-		log.Panic("Failed to load config file.")
+		log.Println("Unable to open config file")
 	}
 
 	config := &GeneralConfig{}
 	err = yaml.Unmarshal(b, config)
 	if err != nil {
-		log.Panic("Error parsing yaml file")
+		log.Panicf("Error parsing yaml file: %s", err.Error())
 	}
 
 	loadGatewayConfig(gw, config.Gateway)

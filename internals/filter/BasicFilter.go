@@ -15,6 +15,9 @@ func NewBasicFilter(filterFunc RunFilter) *BasicFilter {
 }
 
 func (b *BasicFilter) RunFilter(context *Context) *http.Response {
+	if context.next == nil {
+		context.next = b
+	}
 	return b.filterFunc(context)
 }
 

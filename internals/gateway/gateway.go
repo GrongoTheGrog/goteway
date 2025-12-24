@@ -3,6 +3,7 @@ package gateway
 import (
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/GrongoTheGrog/goteway/internals/filter"
@@ -12,19 +13,19 @@ import (
 
 type Gateway struct {
 	routes      []*Route
+	port        int
 	FilterChain *filter.FilterChain
 }
 
 func NewGateway() *Gateway {
 	return &Gateway{
+		port:        0,
 		routes:      make([]*Route, 0),
 		FilterChain: &filter.FilterChain{EntryFilter: filter.NewEntryFilter()},
 	}
 }
 
 func (gateway *Gateway) Start(port string) {
-
-	log.Printf("Starting gateway at port %s", port)
 
 	mux := http.DefaultServeMux
 
@@ -43,6 +44,13 @@ func (gateway *Gateway) Start(port string) {
 			}
 		}
 	})
+
+	truePort := port
+	if gateway.port == 0 {
+		truePort = ":" + strconv.Itoa(gateway.port)
+	}
+
+	log.Printf("Starting gateway at port %s", truePort)
 
 	err := http.ListenAndServe(port, mux)
 	if err != nil {

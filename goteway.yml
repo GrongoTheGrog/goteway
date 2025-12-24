@@ -1,0 +1,30 @@
+gateway:
+  port: 8998
+  log_filter: 
+    - method
+    - path
+    - latency
+    - full_url
+    - status
+
+
+routes:
+  - name: service1
+    enabled: true
+    endpoint: "https://amazon.com"
+    paths:
+      - "/service1/*"
+
+    rate_limiting:
+      enabled: true
+      interval_seconds: 60
+      max_requests: 10        
+      resource: "user"               
+
+
+    strip_prefix: 1              
+    strip_suffix: 0               
+    status: 201                 
+    header_config:
+      - name: X-Service
+        value: service1
