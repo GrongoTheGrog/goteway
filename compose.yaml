@@ -1,0 +1,6 @@
+services:
+  goteway:
+    image: goteway
+    build:
+      context: .
+      dockerfile: ./Dockerfile

@@ -33,43 +33,46 @@ func TestIfDefaultConfigWorks(t *testing.T) {
 
 	res := filter.RunFilter(context)
 
-	assert.Equal(t, res.StatusCode, 500)
+	assert.Equal(t, 500, res.StatusCode)
 }
 
 func TestIfInvalidTokenFails(t *testing.T) {
 	filter := NewJwtFilter(testConfig)
 
-	context.Request.Header.Add("Authorization", "Bearer "+"super invalid token")
+	context.Request.Header.Set("Authorization", "Bearer super invalid token")
 
 	res := filter.RunFilter(context)
 
-	assert.Equal(t, res.StatusCode, 401)
+	assert.Equal(t, 401, res.StatusCode)
 }
 
 func TestIfWrongAudienceFails(t *testing.T) {
-	testConfig.Audience = "something else"
-	filter := NewJwtFilter(testConfig)
+	config := testConfig
+	config.Audience = "something else"
+	filter := NewJwtFilter(config)
 
 	context.Request.Header.Add("Authorization", "Bearer "+generateHS256Jwt())
 
 	res := filter.RunFilter(context)
 
-	assert.Equal(t, res.StatusCode, 401)
+	assert.Equal(t, 401, res.StatusCode)
 }
 
 func TestIfWrongIssuerFails(t *testing.T) {
-	testConfig.Issuer = "something else"
-	filter := NewJwtFilter(testConfig)
+	config := testConfig
+	config.Issuer = "something else"
+	filter := NewJwtFilter(config)
 	context.Request.Header.Add("Authorization", "Bearer "+generateHS256Jwt())
 
 	res := filter.RunFilter(context)
 
-	assert.Equal(t, res.StatusCode, 401)
+	assert.Equal(t, 401, res.StatusCode)
 }
 
 func TestIfRequiredClaimsAreRequired(t *testing.T) {
-	testConfig.RequiredClaims = []string{"missing required claim"}
-	filter := NewJwtFilter(testConfig)
+	config := testConfig
+	config.RequiredClaims = []string{"missing required claim"}
+	filter := NewJwtFilter(config)
 	context.Request.Header.Add("Authorization", "Bearer "+generateHS256Jwt())
 
 	res := filter.RunFilter(context)
@@ -81,9 +84,11 @@ func TestIfMappedClaimsAreForwarded(t *testing.T) {
 	claims := make(map[string]string)
 	claims["aud"] = "X-Audience"
 	claims["sub"] = "X-User-Id"
-	testConfig.MapHeaderClaims = claims
 
-	jwtFilter := NewJwtFilter(testConfig)
+	config := testConfig
+	config.MapHeaderClaims = claims
+
+	jwtFilter := NewJwtFilter(config)
 
 	// setting a filter to run next so i can check
 	// if claims were forwarded
@@ -96,7 +101,7 @@ func TestIfMappedClaimsAreForwarded(t *testing.T) {
 		return ctx.RunNextFilter()
 	})
 
-	context.Request.Header.Add("Authorization", "Bearer "+generateHS256Jwt())
+	context.Request.Header.Set("Authorization", "Bearer "+generateHS256Jwt())
 
 	jwtFilter.SetNext(testFilter)
 	res := jwtFilter.RunFilter(context)
