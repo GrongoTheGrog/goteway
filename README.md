@@ -50,7 +50,7 @@ gw.Start(":9000")
 
 ### Declarative
 
-The declarative way is done by editing a yaml file called goteway.yaml in the root directory of where the program is running.
+The declarative way is done by editing a yml file called goteway.yml in the root directory of where the program is running.
 
 ```Yaml
 gateway: 
