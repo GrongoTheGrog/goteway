@@ -46,7 +46,7 @@ func (gateway *Gateway) Start(port string) {
 	})
 
 	truePort := port
-	if gateway.port == 0 {
+	if gateway.port != 0 {
 		truePort = ":" + strconv.Itoa(gateway.port)
 	}
 
