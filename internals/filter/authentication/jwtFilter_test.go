@@ -3,9 +3,9 @@ package authentication
 import (
 	"encoding/base64"
 	"net/http"
+	"net/url"
 	"testing"
 
-	"github.com/GrongoTheGrog/goteway/internals/config"
 	"github.com/GrongoTheGrog/goteway/internals/filter"
 	"github.com/golang-jwt/jwt"
 	"github.com/stretchr/testify/assert"
@@ -19,11 +19,13 @@ var context = &filter.Context{
 	},
 }
 
-var testConfig config.JwtConfig = config.JwtConfig{
-	Algorithm: "HS256",
-	Secret:    "E84mnV6OTl7oduTDXxvOPTWS5NYWmrRpQK+xLo3X5Jo=",
-	Audience:  "frontend",
-	Issuer:    "Backend",
+var testConfig AuthorizationConfig = AuthorizationConfig{
+	Jwt: JwtConfig{
+		Algorithm: "HS256",
+		Secret:    "E84mnV6OTl7oduTDXxvOPTWS5NYWmrRpQK+xLo3X5Jo=",
+		Audience:  "frontend",
+		Issuer:    "Backend",
+	},
 }
 
 func TestIfDefaultConfigWorks(t *testing.T) {
@@ -48,7 +50,7 @@ func TestIfInvalidTokenFails(t *testing.T) {
 
 func TestIfWrongAudienceFails(t *testing.T) {
 	config := testConfig
-	config.Audience = "something else"
+	config.Jwt.Audience = "something else"
 	filter := NewJwtFilter(config)
 
 	context.Request.Header.Add("Authorization", "Bearer "+generateHS256Jwt())
@@ -60,7 +62,7 @@ func TestIfWrongAudienceFails(t *testing.T) {
 
 func TestIfWrongIssuerFails(t *testing.T) {
 	config := testConfig
-	config.Issuer = "something else"
+	config.Jwt.Issuer = "something else"
 	filter := NewJwtFilter(config)
 	context.Request.Header.Add("Authorization", "Bearer "+generateHS256Jwt())
 
@@ -71,7 +73,7 @@ func TestIfWrongIssuerFails(t *testing.T) {
 
 func TestIfRequiredClaimsAreRequired(t *testing.T) {
 	config := testConfig
-	config.RequiredClaims = []string{"missing required claim"}
+	config.Jwt.RequiredClaims = []string{"missing required claim"}
 	filter := NewJwtFilter(config)
 	context.Request.Header.Add("Authorization", "Bearer "+generateHS256Jwt())
 
@@ -86,7 +88,7 @@ func TestIfMappedClaimsAreForwarded(t *testing.T) {
 	claims["sub"] = "X-User-Id"
 
 	config := testConfig
-	config.MapHeaderClaims = claims
+	config.Jwt.MapHeaderClaims = claims
 
 	jwtFilter := NewJwtFilter(config)
 
@@ -109,6 +111,21 @@ func TestIfMappedClaimsAreForwarded(t *testing.T) {
 	assert.Equal(t, res.StatusCode, 500)
 }
 
+func TestIfAllowedRoutesDoNotNeedJwt(t *testing.T) {
+	config := testConfig
+	config.AllowedRoutes = []string{"/route/*"}
+
+	ctx := context
+	ctx.Request.URL = &url.URL{}
+	ctx.Request.URL.Path = "/route/allowed"
+
+	jwtFilter := NewJwtFilter(config)
+
+	res := jwtFilter.RunFilter(ctx)
+
+	assert.Equal(t, res.StatusCode, 500)
+}
+
 var globalClaims jwt.StandardClaims = jwt.StandardClaims{
 	Audience: "frontend",
 	Issuer:   "Backend",
@@ -117,7 +134,7 @@ var globalClaims jwt.StandardClaims = jwt.StandardClaims{
 
 func generateHS256Jwt() string {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, globalClaims)
-	b, err := base64.StdEncoding.DecodeString(testConfig.Secret)
+	b, err := base64.StdEncoding.DecodeString(testConfig.Jwt.Secret)
 
 	jwt, err := token.SignedString(b)
 	if err != nil {

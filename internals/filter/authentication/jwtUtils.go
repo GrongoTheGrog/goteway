@@ -8,12 +8,11 @@ import (
 	"math/big"
 	"net/http"
 
-	"github.com/GrongoTheGrog/goteway/internals/config"
 	"github.com/GrongoTheGrog/goteway/internals/filter"
 	"github.com/golang-jwt/jwt"
 )
 
-func getToken(ctx *filter.Context, c config.JwtConfig) (string, error) {
+func getToken(ctx *filter.Context, c JwtConfig) (string, error) {
 	if c.Cookie == "" {
 		header := ctx.Request.Header.Get(c.Header)
 		if header == "" {
@@ -29,7 +28,7 @@ func getToken(ctx *filter.Context, c config.JwtConfig) (string, error) {
 	}
 }
 
-func decodeToken(rawToken string, c config.JwtConfig) (jwt.MapClaims, error) {
+func decodeToken(rawToken string, c JwtConfig) (jwt.MapClaims, error) {
 
 	claims := jwt.MapClaims{}
 

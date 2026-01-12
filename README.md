@@ -61,7 +61,40 @@ gateway:
     - full_url
     - status
 
+  auth:
 
+    allowed_routes: # Regex list of routes that won't need authentication
+      - /allowed/route1/*
+      - /allowed/route2/*
+
+    jwt:
+      enabled: true
+      required: true
+      audience: frontend
+      issuer: backend
+      
+      cookie: cookie_name  # use if token is in a cookie
+
+      header: X-Auth-Header  # Header in which token will be retrieved. Default is Authorization
+      prefix: Bearer    # Prefix of the header. Default is "Bearer "
+
+      claims:           #This is a map of claims that will be passed to the correspondent header
+        email: X-email
+        name: X-name
+      
+      required_claims:  # Necessary claims that must be found in the JWT
+        - email
+        - name
+
+      algorithm: HS256 # Either HS256 or RS256
+
+      # HS256
+      secret: token_simetric_secret
+
+      # RS256
+      public_key: your public key
+      JwksUrl: https://jwt_provider/jwks  # Use it if using dynamic public keys with Jwks
+      
 routes:
   - name: service1
     enabled: true

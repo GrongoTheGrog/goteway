@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/GrongoTheGrog/goteway/internals/filter"
+	"github.com/GrongoTheGrog/goteway/internals/filter/authentication"
 	"github.com/GrongoTheGrog/goteway/internals/filter/logging"
 	"github.com/GrongoTheGrog/goteway/internals/filter/rateLimiting"
 	"github.com/GrongoTheGrog/goteway/internals/gateway"
@@ -52,6 +53,16 @@ func loadGatewayConfig(gw *gateway.Gateway, config GatewayConfig) {
 		}
 		gw.LogFilter(options...)
 	}
+
+	loadAuthConfig(gw, config.Auth)
+}
+
+func loadAuthConfig(gw *gateway.Gateway, config authentication.AuthorizationConfig) {
+	if config.Jwt.Enabled == false {
+		return
+	}
+
+	gw.AddFilter(authentication.NewJwtFilter(config))
 }
 
 func loadRoute(gw *gateway.Gateway, configs []RouteConfig) {

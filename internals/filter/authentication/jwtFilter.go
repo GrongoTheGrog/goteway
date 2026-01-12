@@ -7,39 +7,51 @@ import (
 	"io"
 	"maps"
 	"net/http"
+	"regexp"
 
-	"github.com/GrongoTheGrog/goteway/internals/config"
 	"github.com/GrongoTheGrog/goteway/internals/filter"
 )
 
 var byteDecodedSecret []byte
 
-func NewJwtFilter(c config.JwtConfig) *filter.BasicFilter {
+func NewJwtFilter(c AuthorizationConfig) *filter.BasicFilter {
 
-	applyDefaults(&c)
-	if c.Secret != "" {
-		key, _ := base64.StdEncoding.DecodeString(c.Secret)
+	applyDefaults(&c.Jwt)
+
+	if c.Jwt.Secret != "" {
+		key, _ := base64.StdEncoding.DecodeString(c.Jwt.Secret)
 		byteDecodedSecret = key
+	}
+
+	allowedRoutesRegex := make([]*regexp.Regexp, 0)
+	for _, route := range c.AllowedRoutes {
+		allowedRoutesRegex = append(allowedRoutesRegex, regexp.MustCompile(route))
 	}
 
 	return filter.NewBasicFilter(func(context *filter.Context) *http.Response {
 
-		tokenString, err := getToken(context, c)
+		for _, regex := range allowedRoutesRegex {
+			if regex.Match([]byte(context.Request.URL.Path)) {
+				return context.RunNextFilter()
+			}
+		}
+
+		tokenString, err := getToken(context, c.Jwt)
 		if err != nil {
 			context.Log("Invalid token provided: %s", err.Error())
 			return invalidToken(err.Error())
 		}
 		context.Log("Jwt token retrieved.")
 
-		claims, err := decodeToken(tokenString, c)
+		claims, err := decodeToken(tokenString, c.Jwt)
 		if err != nil {
 			context.Log("Invalid token provided: %s", err.Error())
 			return invalidToken(err.Error())
 		}
 		context.Log("Jwt token decoded.")
 
-		if c.RequiredClaims != nil {
-			for _, claim := range c.RequiredClaims {
+		if c.Jwt.RequiredClaims != nil {
+			for _, claim := range c.Jwt.RequiredClaims {
 				_, ok := claims[claim]
 				if !ok {
 					context.Log("Invalid token provided ")
@@ -48,7 +60,7 @@ func NewJwtFilter(c config.JwtConfig) *filter.BasicFilter {
 			}
 		}
 
-		for claim, header := range maps.All(c.MapHeaderClaims) {
+		for claim, header := range maps.All(c.Jwt.MapHeaderClaims) {
 			value, ok := claims[claim]
 			if ok {
 				castedValue, _ := value.(string)
@@ -60,7 +72,7 @@ func NewJwtFilter(c config.JwtConfig) *filter.BasicFilter {
 	})
 }
 
-func applyDefaults(c *config.JwtConfig) {
+func applyDefaults(c *JwtConfig) {
 	if c.Header == "" {
 		c.Header = "Authorization"
 	}
