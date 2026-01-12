@@ -1,0 +1,36 @@
+name: Build and Push Docker Image on Release
+
+on:
+  release:
+    types: [published] 
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build image with release tag
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/goteway:${{ github.ref_name }} .
+
+      - name: Tag image as latest
+        run: |
+          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/goteway:${{ github.ref_name }} \
+                     ${{ secrets.DOCKERHUB_USERNAME }}/goteway:latest
+
+      - name: Push version tag
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/goteway:${{ github.ref_name }}
+
+      - name: Push latest tag
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/goteway:latest
