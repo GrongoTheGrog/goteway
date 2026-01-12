@@ -1,10 +1,8 @@
-name: Build and Push Docker Image
+name: Build and Push Docker Image on Release
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+  release:
+    types: [published] 
 
 jobs:
   build-and-push:
@@ -20,10 +18,19 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build Docker image
+      - name: Build image with release tag
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/goteway:latest .
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/goteway:${{ github.ref_name }} .
 
-      - name: Push Docker image
+      - name: Tag image as latest
+        run: |
+          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/goteway:${{ github.ref_name }} \
+                     ${{ secrets.DOCKERHUB_USERNAME }}/goteway:latest
+
+      - name: Push version tag
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/goteway:${{ github.ref_name }}
+
+      - name: Push latest tag
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/goteway:latest
